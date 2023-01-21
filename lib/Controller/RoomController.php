@@ -156,6 +156,8 @@ class RoomController extends AEnvironmentAwareController {
 				$this->config->getAppValue('spreed', 'allowed_groups', '') . '#' .
 				$this->config->getAppValue('spreed', 'start_calls', '') . '#' .
 				$this->config->getAppValue('spreed', 'start_conversations', '') . '#' .
+				$this->config->getAppValue('spreed', 'start_group_conversations', '') . '#' .
+				$this->config->getAppValue('spreed', 'start_public_conversations', '') . '#' .
 				$this->config->getAppValue('spreed', 'has_reference_id', '') . '#' .
 				$this->config->getAppValue('spreed', 'sip_bridge_groups', '[]') . '#' .
 				$this->config->getAppValue('spreed', 'sip_bridge_dialin_info') . '#' .

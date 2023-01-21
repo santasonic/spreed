@@ -112,3 +112,5 @@
 * `config => call => recording` - Whether calls can be recorded (requires the High-performance backend server)
 * `single-conversation-status` - When the response of a single conversation can also return the user status
 * `chat-keep-notifications` - Whether messages can be retrieved without marking notifications as read
+* `config => conversations => can-create-group` - Whether the user can create group conversations, if not only one-to-one conversations are allowed
+* `config => conversations => can-create-public` - Whether the user can create public conversations, if not only one-to-one conversations are allowed

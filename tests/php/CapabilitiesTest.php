@@ -180,6 +180,8 @@ class CapabilitiesTest extends TestCase {
 					],
 					'conversations' => [
 						'can-create' => false,
+						'can-create-group' => false,
+						'can-create-public' => false,
 					],
 					'previews' => [
 						'max-gif-size' => 200000,
@@ -195,8 +197,8 @@ class CapabilitiesTest extends TestCase {
 
 	public function dataGetCapabilitiesUserAllowed(): array {
 		return [
-			[true, false, Participant::PRIVACY_PRIVATE],
-			[false, true, Participant::PRIVACY_PUBLIC],
+			[true, false, false, false, Participant::PRIVACY_PRIVATE],
+			[false, true, true, true, Participant::PRIVACY_PUBLIC],
 		];
 	}
 
@@ -206,7 +208,13 @@ class CapabilitiesTest extends TestCase {
 	 * @param bool $canCreate
 	 * @param int $readPrivacy
 	 */
-	public function testGetCapabilitiesUserAllowed(bool $isNotAllowed, bool $canCreate, int $readPrivacy): void {
+	public function testGetCapabilitiesUserAllowed(
+		bool $isNotAllowed,
+		bool $canCreate,
+		bool $canCreateGroup,
+		bool $canCreatePublic,
+		int $readPrivacy
+	): void {
 		$capabilities = new Capabilities(
 			$this->serverConfig,
 			$this->talkConfig,
@@ -239,6 +247,16 @@ class CapabilitiesTest extends TestCase {
 
 		$this->talkConfig->expects($this->once())
 			->method('isNotAllowedToCreateConversations')
+			->with($user)
+			->willReturn($isNotAllowed);
+
+		$this->talkConfig->expects($this->once())
+			->method('isNotAllowedToCreateGroupConversations')
+			->with($user)
+			->willReturn($isNotAllowed);
+
+		$this->talkConfig->expects($this->once())
+			->method('isNotAllowedToCreatePublicConversations')
 			->with($user)
 			->willReturn($isNotAllowed);
 
@@ -282,6 +300,8 @@ class CapabilitiesTest extends TestCase {
 					],
 					'conversations' => [
 						'can-create' => $canCreate,
+						'can-create-group' => $canCreateGroup,
+						'can-create-public' => $canCreatePublic,
 					],
 					'previews' => [
 						'max-gif-size' => 200000,
