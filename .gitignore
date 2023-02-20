@@ -25,3 +25,9 @@
 
 # VScode settings
 .vscode
+
+# Recording server packages
+/recording/deb_dist
+/recording/dist/
+/recording/nextcloud-talk-recording-*.tar.gz
+/recording/src/nextcloud_talk_recording.egg-info/
