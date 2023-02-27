@@ -5,6 +5,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2020 Joas Schilling <coding@schilljs.com>
  *
  * @author Joas Schilling <coding@schilljs.com>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -70,9 +71,14 @@ class SettingsController extends OCSController {
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @param string $key
-	 * @param string|int|null $value
-	 * @return DataResponse
+	 * Update user setting
+	 *
+	 * @param string $key Key to update
+	 * @param string|int|null $value New value for the key
+	 * @return DataResponse<array, Http::STATUS_OK|Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: User setting updated successfully
+	 * 400: Updating user setting is not possible
 	 */
 	public function setUserSetting(string $key, $value): DataResponse {
 		if (!$this->validateUserSetting($key, $value)) {
@@ -124,10 +130,12 @@ class SettingsController extends OCSController {
 	}
 
 	/**
-	 * @param string[] $sipGroups
-	 * @param string $dialInInfo
-	 * @param string $sharedSecret
-	 * @return DataResponse
+	 * Update SIP settings
+	 *
+	 * @param string[] $sipGroups New SIP groups
+	 * @param string $dialInInfo New dial info
+	 * @param string $sharedSecret New shared secret
+	 * @return DataResponse<array, Http::STATUS_OK>
 	 */
 	public function setSIPSettings(
 		array $sipGroups = [],

@@ -5,6 +5,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2023 Joas Schilling <coding@schilljs.com>
  *
  * @author Joas Schilling <coding@schilljs.com>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -31,6 +32,7 @@ use OCA\Talk\Model\Attendee;
 use OCA\Talk\Model\BreakoutRoom;
 use OCA\Talk\Model\Session;
 use OCA\Talk\Participant;
+use OCA\Talk\ResponseDefinitions;
 use OCA\Talk\Room;
 use OCA\Talk\Webinary;
 use OCP\App\IAppManager;
@@ -43,6 +45,9 @@ use OCP\IUserManager;
 use OCP\UserStatus\IManager;
 use OCP\UserStatus\IUserStatus;
 
+/**
+ * @psalm-import-type SpreedRoom from ResponseDefinitions
+ */
 class RoomFormatter {
 	public function __construct(
 		protected Config $talkConfig,
@@ -60,6 +65,9 @@ class RoomFormatter {
 	) {
 	}
 
+	/**
+	 * @return SpreedRoom
+	 */
 	public function formatRoom(
 		string $responseFormat,
 		array $commonReadMessages,
@@ -80,6 +88,9 @@ class RoomFormatter {
 		);
 	}
 
+	/**
+	 * @return SpreedRoom
+	 */
 	public function formatRoomV4(
 		string $responseFormat,
 		array $commonReadMessages,

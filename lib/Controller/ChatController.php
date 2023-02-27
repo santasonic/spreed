@@ -5,6 +5,8 @@ declare(strict_types=1);
  *
  * @copyright Copyright (c) 2017, Daniel Calviño Sánchez (danxuliu@gmail.com)
  *
+ * @author Kate Döen <kate.doeen@nextcloud.com>
+ *
  * @license GNU AGPL version 3 or any later version
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,6 +38,7 @@ use OCA\Talk\Model\Attendee;
 use OCA\Talk\Model\Message;
 use OCA\Talk\Model\Session;
 use OCA\Talk\Participant;
+use OCA\Talk\ResponseDefinitions;
 use OCA\Talk\Room;
 use OCA\Talk\Service\AttachmentService;
 use OCA\Talk\Service\ParticipantService;
@@ -62,6 +65,10 @@ use OCP\User\Events\UserLiveStatusEvent;
 use OCP\UserStatus\IManager as IUserStatusManager;
 use OCP\UserStatus\IUserStatus;
 
+/**
+ * @psalm-import-type SpreedMessage from ResponseDefinitions
+ * @psalm-import-type SpreedMention from ResponseDefinitions
+ */
 class ChatController extends AEnvironmentAwareController {
 	private ?string $userId;
 	private IUserManager $userManager;
@@ -154,6 +161,9 @@ class ChatController extends AEnvironmentAwareController {
 		return [$actorType, $actorId];
 	}
 
+	/**
+	 * @return DataResponse<SpreedMessage|array, Http::STATUS_CREATED>
+	 */
 	public function parseCommentToResponse(IComment $comment, Message $parentMessage = null): DataResponse {
 		$chatMessage = $this->messageParser->createMessage($this->room, $this->participant, $comment, $this->l);
 		$this->messageParser->parseMessage($chatMessage);
@@ -187,7 +197,7 @@ class ChatController extends AEnvironmentAwareController {
 	 * @RequirePermissions(permissions=chat)
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * Sends a new chat message to the given room.
+	 * Sends a new chat message to the given room
 	 *
 	 * The author and timestamp are automatically set to the current user/guest
 	 * and time.
@@ -197,9 +207,12 @@ class ChatController extends AEnvironmentAwareController {
 	 * @param string $referenceId for the message to be able to later identify it again
 	 * @param int $replyTo Parent id which this message is a reply to
 	 * @param bool $silent If sent silent the chat message will not create any notifications
-	 * @return DataResponse the status code is "201 Created" if successful, and
-	 *         "404 Not found" if the room or session for a guest user was not
-	 *         found".
+	 * @return DataResponse<SpreedMessage|array, Http::STATUS_CREATED>|DataResponse<array, Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND|Http::STATUS_REQUEST_ENTITY_TOO_LARGE>
+	 *
+	 * 201: Message sent successfully
+	 * 400: Sending message is not possible
+	 * 404: Guest not found
+	 * 413: Message too long
 	 */
 	public function sendMessage(string $message, string $actorDisplayName = '', string $referenceId = '', int $replyTo = 0, bool $silent = false): DataResponse {
 		[$actorType, $actorId] = $this->getActorInfo($actorDisplayName);
@@ -244,19 +257,22 @@ class ChatController extends AEnvironmentAwareController {
 	 * @RequirePermissions(permissions=chat)
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * Sends a rich-object to the given room.
+	 * Sends a rich-object to the given room
 	 *
 	 * The author and timestamp are automatically set to the current user/guest
 	 * and time.
 	 *
-	 * @param string $objectType
-	 * @param string $objectId
-	 * @param string $metaData
-	 * @param string $actorDisplayName
-	 * @param string $referenceId
-	 * @return DataResponse the status code is "201 Created" if successful, and
-	 *         "404 Not found" if the room or session for a guest user was not
-	 *         found".
+	 * @param string $objectType Type of the object
+	 * @param string $objectId ID of the object
+	 * @param string $metaData Additional metadata
+	 * @param string $actorDisplayName Guest name
+	 * @param string $referenceId Reference ID
+	 * @return DataResponse<SpreedMessage|array, Http::STATUS_CREATED>|DataResponse<array, Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND|Http::STATUS_REQUEST_ENTITY_TOO_LARGE>
+	 *
+	 * 201: Object shared successfully
+	 * 400: Sharing object is not possible
+	 * 404: Guest not found
+	 * 413: Message too long
 	 */
 	public function shareObjectToChat(string $objectType, string $objectId, string $metaData = '', string $actorDisplayName = '', string $referenceId = ''): DataResponse {
 		[$actorType, $actorId] = $this->getActorInfo($actorDisplayName);
@@ -341,7 +357,7 @@ class ChatController extends AEnvironmentAwareController {
 	 * @RequireParticipant
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * Receives chat messages from the given room.
+	 * Receives chat messages from the given room
 	 *
 	 * - Receiving the history ($lookIntoFuture=0):
 	 *   The next $limit messages after $lastKnownMessageId will be returned.
@@ -381,12 +397,10 @@ class ChatController extends AEnvironmentAwareController {
 	 * @param int $includeLastKnown Include the $lastKnownMessageId in the messages when 1 (default 0)
 	 * @param int $noStatusUpdate When the user status should not be automatically set to online set to 1 (default 0)
 	 * @param int $markNotificationsAsRead Set to 0 when notifications should not be marked as read (default 1)
-	 * @return DataResponse an array of chat messages, "404 Not found" if the
-	 *         room token was not valid or "304 Not modified" if there were no messages;
-	 *         each chat message is an array with
-	 *         fields 'id', 'token', 'actorType', 'actorId',
-	 *         'actorDisplayName', 'timestamp' (in seconds and UTC timezone) and
-	 *         'message'.
+	 * @return DataResponse<SpreedMessage[], Http::STATUS_OK>|DataResponse<array, Http::STATUS_NOT_MODIFIED>
+	 *
+	 * 200: Messages returned
+	 * 304: No messages
 	 */
 	public function receiveMessages(int $lookIntoFuture,
 									int $limit = 100,
@@ -453,6 +467,9 @@ class ChatController extends AEnvironmentAwareController {
 		return $this->prepareCommentsAsDataResponse($comments);
 	}
 
+	/**
+	 * @return DataResponse<SpreedMessage[], Http::STATUS_OK>|DataResponse<array, Http::STATUS_NOT_MODIFIED>
+	 */
 	protected function prepareCommentsAsDataResponse(array $comments, int $lastCommonReadId = 0): DataResponse {
 		if (empty($comments)) {
 			$response = new DataResponse([], Http::STATUS_NOT_MODIFIED);
@@ -587,9 +604,14 @@ class ChatController extends AEnvironmentAwareController {
 	 * @RequireParticipant
 	 * @RequireModeratorOrNoLobby
 	 *
+	 * Get the context of a message
+	 *
 	 * @param int $messageId The focused message which should be in the "middle" of the returned context
 	 * @param int $limit Number of chat messages to receive in both directions (50 by default, 100 at most, might return 201 messages)
-	 * @return DataResponse
+	 * @return DataResponse<SpreedMessage[], Http::STATUS_OK>|DataResponse<array, Http::STATUS_NOT_MODIFIED>
+	 *
+	 * 200: Message context returned
+	 * 304: No messages
 	 */
 	public function getMessageContext(
 		int $messageId,
@@ -655,8 +677,17 @@ class ChatController extends AEnvironmentAwareController {
 	 * @RequirePermissions(permissions=chat)
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * @param int $messageId
-	 * @return DataResponse
+	 * Delete a chat message
+	 *
+	 * @param int $messageId ID of the message
+	 * @return DataResponse<SpreedMessage, Http::STATUS_OK|Http::STATUS_ACCEPTED>|DataResponse<array, Http::STATUS_BAD_REQUEST|Http::STATUS_FORBIDDEN|Http::STATUS_NOT_FOUND|Http::STATUS_METHOD_NOT_ALLOWED>
+	 *
+	 * 200: Message deleted successfully
+	 * 202: Message deleted successfully
+	 * 400: Deleting message is not possible
+	 * 403: Missing permissions to delete message
+	 * 404: Message not found
+	 * 405: Deleting message is not allowed
 	 */
 	public function deleteMessage(int $messageId): DataResponse {
 		try {
@@ -726,7 +757,13 @@ class ChatController extends AEnvironmentAwareController {
 	 * @RequireModeratorParticipant
 	 * @RequireReadWriteConversation
 	 *
-	 * @return DataResponse
+	 * Clear the chat history
+	 *
+	 * @return DataResponse<SpreedMessage, Http::STATUS_OK|Http::STATUS_ACCEPTED>|DataResponse<array, Http::STATUS_FORBIDDEN>
+	 *
+	 * 200: History cleared successfully
+	 * 202: History cleared successfully
+	 * 403: Missing permissions to clear history
 	 */
 	public function clearHistory(): DataResponse {
 		$attendee = $this->participant->getAttendee();
@@ -762,8 +799,10 @@ class ChatController extends AEnvironmentAwareController {
 	 * @NoAdminRequired
 	 * @RequireParticipant
 	 *
-	 * @param int $lastReadMessage
-	 * @return DataResponse
+	 * Set the read marker to a specific message
+	 *
+	 * @param int $lastReadMessage ID if the last read message
+	 * @return DataResponse<array, Http::STATUS_OK>
 	 */
 	public function setReadMarker(int $lastReadMessage): DataResponse {
 		$this->participantService->updateLastReadMessage($this->participant, $lastReadMessage);
@@ -778,7 +817,9 @@ class ChatController extends AEnvironmentAwareController {
 	 * @NoAdminRequired
 	 * @RequireParticipant
 	 *
-	 * @return DataResponse
+	 * Mark a chat as unread
+	 *
+	 * @return DataResponse<array, Http::STATUS_OK>
 	 */
 	public function markUnread(): DataResponse {
 		$message = $this->room->getLastMessage();
@@ -807,8 +848,10 @@ class ChatController extends AEnvironmentAwareController {
 	 * @RequireParticipant
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * @param int $limit
-	 * @return DataResponse
+	 * Get objects that are shared in the room overview
+	 *
+	 * @param int $limit Maximum number of objects
+	 * @return DataResponse<array<string, SpreedMessage[]>, Http::STATUS_OK>
 	 */
 	public function getObjectsSharedInRoomOverview(int $limit = 7): DataResponse {
 		$limit = min(20, $limit);
@@ -855,10 +898,12 @@ class ChatController extends AEnvironmentAwareController {
 	 * @RequireParticipant
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * @param string $objectType
-	 * @param int $lastKnownMessageId
-	 * @param int $limit
-	 * @return DataResponse
+	 * Get objects that are shared in the room
+	 *
+	 * @param string $objectType Type of the objects
+	 * @param int $lastKnownMessageId ID of the last known message
+	 * @param int $limit Maximum number of objects
+	 * @return DataResponse<SpreedMessage[], Http::STATUS_OK>
 	 */
 	public function getObjectsSharedInRoom(string $objectType, int $lastKnownMessageId = 0, int $limit = 100): DataResponse {
 		$offset = max(0, $lastKnownMessageId);
@@ -879,6 +924,9 @@ class ChatController extends AEnvironmentAwareController {
 		return $response;
 	}
 
+	/**
+	 * @return SpreedMessage[]
+	 */
 	protected function getMessagesForRoom(array $messageIds): array {
 		$comments = $this->chatManager->getMessagesById($this->room, $messageIds);
 		$this->preloadShares($comments);
@@ -913,10 +961,12 @@ class ChatController extends AEnvironmentAwareController {
 	 * @RequirePermissions(permissions=chat)
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * @param string $search
-	 * @param int $limit
-	 * @param bool $includeStatus
-	 * @return DataResponse
+	 * Search for mentions
+	 *
+	 * @param string $search Text to search for
+	 * @param int $limit Maximum number of results
+	 * @param bool $includeStatus Include the user statuses
+	 * @return DataResponse<SpreedMention[], Http::STATUS_OK>
 	 */
 	public function mentions(string $search, int $limit = 20, bool $includeStatus = false): DataResponse {
 		$this->searchPlugin->setContext([
@@ -960,7 +1010,7 @@ class ChatController extends AEnvironmentAwareController {
 	/**
 	 * @param array $results
 	 * @param IUserStatus[] $statuses
-	 * @return array
+	 * @return SpreedMention[]
 	 */
 	protected function prepareResultArray(array $results, array $statuses): array {
 		$output = [];

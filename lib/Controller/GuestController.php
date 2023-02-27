@@ -5,6 +5,8 @@ declare(strict_types=1);
  *
  * @copyright Copyright (c) 2017, Daniel Calviño Sánchez (danxuliu@gmail.com)
  *
+ * @author Kate Döen <kate.doeen@nextcloud.com>
+ *
  * @license GNU AGPL version 3 or any later version
  *
  * This program is free software: you can redistribute it and/or modify
@@ -45,8 +47,14 @@ class GuestController extends AEnvironmentAwareController {
 	 * @PublicPage
 	 * @RequireParticipant
 	 *
-	 * @param string $displayName
-	 * @return DataResponse
+	 * Set the display name as a guest
+	 *
+	 * @param string $displayName New display name
+	 * @return DataResponse<array, Http::STATUS_OK|Http::STATUS_FORBIDDEN|Http::STATUS_NOT_FOUND>
+	 *
+	 * 200: Display name updated successfully
+	 * 403: Not a guest
+	 * 404: Not a participant
 	 */
 	public function setDisplayName(string $displayName): DataResponse {
 		$participant = $this->getParticipant();

@@ -5,6 +5,8 @@ declare(strict_types=1);
  *
  * @copyright Copyright (c) 2018, Daniel Calviño Sánchez (danxuliu@gmail.com)
  *
+ * @author Kate Döen <kate.doeen@nextcloud.com>
+ *
  * @license GNU AGPL version 3 or any later version
  *
  * This program is free software: you can redistribute it and/or modify
@@ -61,7 +63,7 @@ class PublicShareAuthController extends OCSController {
 	/**
 	 * @PublicPage
 	 *
-	 * Creates a new room for requesting the password of a share.
+	 * Create a new room for requesting the password of a share
 	 *
 	 * The new room is a public room associated with a "share:password" object
 	 * with the ID of the share token. Unlike normal rooms in which the owner is
@@ -72,10 +74,10 @@ class PublicShareAuthController extends OCSController {
 	 * The share must have "send password by Talk" enabled; an error is returned
 	 * otherwise.
 	 *
-	 * @param string $shareToken
-	 * @return DataResponse the status code is "201 Created" if a new room is
-	 *         created, "200 OK" if an existing room is returned, or "404 Not
-	 *         found" if the given share was invalid.
+	 * @param string $shareToken Token of the share
+	 * @return DataResponse<array, Http::STATUS_CREATED|Http::STATUS_NOT_FOUND>
+	 * 201: Room created successfully
+	 * 404: Share not found
 	 */
 	public function createRoom(string $shareToken): DataResponse {
 		try {

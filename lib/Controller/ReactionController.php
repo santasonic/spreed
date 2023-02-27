@@ -5,6 +5,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2021 Vitor Mattos <vitor@php.rio>
  *
  * @author Vitor Mattos <vitor@php.rio>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -29,11 +30,15 @@ use OCA\Talk\Chat\ReactionManager;
 use OCA\Talk\Exceptions\ReactionAlreadyExistsException;
 use OCA\Talk\Exceptions\ReactionNotSupportedException;
 use OCA\Talk\Exceptions\ReactionOutOfContextException;
+use OCA\Talk\ResponseDefinitions;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\Comments\NotFoundException;
 use OCP\IRequest;
 
+/**
+ * @psalm-import-type SpreedReaction from ResponseDefinitions
+ */
 class ReactionController extends AEnvironmentAwareController {
 	private ReactionManager $reactionManager;
 
@@ -51,9 +56,16 @@ class ReactionController extends AEnvironmentAwareController {
 	 * @RequirePermissions(permissions=chat)
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * @param int $messageId for reaction
-	 * @param string $reaction the reaction emoji
-	 * @return DataResponse
+	 * Add a reaction to a message
+	 *
+	 * @param int $messageId ID of the message
+	 * @param string $reaction Emoji to add
+	 * @return DataResponse<array<string, SpreedReaction[]>, Http::STATUS_OK|Http::STATUS_CREATED>|DataResponse<array, Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND>
+	 *
+	 * 200: Reaction already existed
+	 * 201: Reaction added successfully
+	 * 400: Adding reaction is not possible
+	 * 404: Message not found
 	 */
 	public function react(int $messageId, string $reaction): DataResponse {
 		try {
@@ -82,9 +94,15 @@ class ReactionController extends AEnvironmentAwareController {
 	 * @RequirePermissions(permissions=chat)
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * @param int $messageId for reaction
-	 * @param string $reaction the reaction emoji
-	 * @return DataResponse
+	 * Delete a reaction from a message
+	 *
+	 * @param int $messageId ID of the message
+	 * @param string $reaction Emoji to remove
+	 * @return DataResponse<array<string, SpreedReaction[]> , Http::STATUS_OK>|DataResponse<array, Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND>
+	 *
+	 * 200: Reaction deleted successfully
+	 * 400: Deleting reaction is not possible
+	 * 404: Message not found
 	 */
 	public function delete(int $messageId, string $reaction): DataResponse {
 		try {
@@ -109,9 +127,14 @@ class ReactionController extends AEnvironmentAwareController {
 	 * @RequireParticipant
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * @param int $messageId for reaction
-	 * @param string|null $reaction the reaction emoji
-	 * @return DataResponse
+	 * Get a list of reactions for a message
+	 *
+	 * @param int $messageId ID of the message
+	 * @param string|null $reaction Emoji to filter
+	 * @return DataResponse<array<string, SpreedReaction[]>, Http::STATUS_OK>|DataResponse<array, Http::STATUS_NOT_FOUND>
+	 *
+	 * 200: Reactions returned
+	 * 404: Message or reaction not found
 	 */
 	public function getReactions(int $messageId, ?string $reaction): DataResponse {
 		try {

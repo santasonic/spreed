@@ -5,6 +5,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2016 Lukas Reschke <lukas@statuscode.ch>
  *
  * @author Lukas Reschke <lukas@statuscode.ch>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -126,6 +127,7 @@ class PageController extends Controller {
 	 * @NoCSRFRequired
 	 * @UseSession
 	 * @BruteForceProtection(action=talkRoomToken)
+	 * @IgnoreAPI
 	 *
 	 * @param string $token
 	 * @return Response
@@ -141,6 +143,7 @@ class PageController extends Controller {
 	 * @NoCSRFRequired
 	 * @UseSession
 	 * @BruteForceProtection(action=talkRoomPassword)
+	 * @IgnoreAPI
 	 *
 	 * @param string $token
 	 * @param string $password
@@ -155,6 +158,7 @@ class PageController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
+	 * @IgnoreAPI
 	 *
 	 * @return Response
 	 */
@@ -165,6 +169,7 @@ class PageController extends Controller {
 	/**
 	 * @PublicPage
 	 * @NoCSRFRequired
+	 * @IgnoreAPI
 	 *
 	 * @return Response
 	 */
@@ -177,6 +182,7 @@ class PageController extends Controller {
 	 * @NoCSRFRequired
 	 * @UseSession
 	 * @BruteForceProtection(action=talkRoomToken)
+	 * @IgnoreAPI
 	 *
 	 * @param string $token
 	 * @param string $callUser
@@ -307,6 +313,7 @@ class PageController extends Controller {
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @BruteForceProtection(action=talkRoomToken)
+	 * @IgnoreAPI
 	 *
 	 * @param string $token
 	 * @return TemplateResponse|NotFoundResponse

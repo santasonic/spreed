@@ -5,6 +5,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2022 Vitor Mattos <vitor@php.rio>
  *
  * @author Vitor Mattos <vitor@php.rio>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -57,6 +58,15 @@ class RecordingController extends AEnvironmentAwareController {
 		parent::__construct($appName, $request);
 	}
 
+	/**
+	 * Get the welcome message of a recording server
+	 *
+	 * @param int $serverId ID of the server
+	 * @return DataResponse<array{version: float}, Http::STATUS_OK>|DataResponse<array, Http::STATUS_NOT_FOUND>|DataResponse<array{error: string}, Http::STATUS_INTERNAL_SERVER_ERROR>
+	 *
+	 * 200: Welcome message returned
+	 * 404: Recording server not found
+	 */
 	public function getWelcomeMessage(int $serverId): DataResponse {
 		$recordingServers = $this->talkConfig->getRecordingServers();
 		if (empty($recordingServers) || !isset($recordingServers[$serverId])) {
@@ -129,12 +139,17 @@ class RecordingController extends AEnvironmentAwareController {
 	}
 
 	/**
-	 * Backend API to update recording status by backends.
+	 * Update the recording status as a backend
 	 *
 	 * @PublicPage
 	 * @BruteForceProtection(action=talkRecordingSecret)
 	 *
-	 * @return DataResponse
+	 * @return DataResponse<array, Http::STATUS_OK>|DataResponse<array{type: string, error: array{code: string, message: string}}, Http::STATUS_BAD_REQUEST|Http::STATUS_FORBIDDEN|Http::STATUS_NOT_FOUND>
+	 *
+	 * 200: Recording status updated successfully
+	 * 400: Updating recording status is not possible
+	 * 403: Missing permissions to update recording status
+	 * 404: Room not found
 	 */
 	public function backend(): DataResponse {
 		$json = $this->getInputStream();
@@ -266,6 +281,14 @@ class RecordingController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
+	 *
+	 * Start the recording
+	 *
+	 * @param int $status Type of the recording
+	 * @return DataResponse<array, Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Recording started successfully
+	 * 400: Starting recording is not possible
 	 */
 	public function start(int $status): DataResponse {
 		try {
@@ -279,6 +302,13 @@ class RecordingController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
+	 *
+	 * Stop the recording
+	 *
+	 * @return DataResponse<array, Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Recording stopped successfully
+	 * 400: Stopping recording is not possible
 	 */
 	public function stop(): DataResponse {
 		try {
@@ -294,7 +324,14 @@ class RecordingController extends AEnvironmentAwareController {
 	 * @RequireRoom
 	 * @BruteForceProtection(action=talkRecordingSecret)
 	 *
-	 * @return DataResponse
+	 * Store the recording
+	 *
+	 * @param string $owner User that will own the recording file
+	 * @return DataResponse<array, Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>|DataResponse<array{type: string, error: array{code: string, message: string}}, Http::STATUS_UNAUTHORIZED>
+	 *
+	 * 200: Recording stored successfully
+	 * 400: Storing recording is not possible
+	 * 401: Missing permissions to store recording
 	 */
 	public function store(string $owner): DataResponse {
 		$data = $this->room->getToken();
@@ -322,6 +359,14 @@ class RecordingController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireModeratorParticipant
+	 *
+	 * Dismiss the store call recording notification
+	 *
+	 * @param int $timestamp Timestamp of the notification to be dismissed
+	 * @return DataResponse<array, Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Notification dismissed successfully
+	 * 400: Dismissing notification is not possible
 	 */
 	public function notificationDismiss(int $timestamp): DataResponse {
 		try {
@@ -339,6 +384,15 @@ class RecordingController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireModeratorParticipant
+	 *
+	 * Share the recorded file to the chat
+	 *
+	 * @param int $fileId ID of the file
+	 * @param int $timestamp Timestamp of the notification to be dismissed
+	 * @return DataResponse<array, Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Recording shared to chat successfully
+	 * 400: Sharing recording to chat is not possible
 	 */
 	public function shareToChat(int $fileId, int $timestamp): DataResponse {
 		try {

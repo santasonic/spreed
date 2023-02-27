@@ -6,6 +6,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2019 Joas Schilling <coding@schilljs.com>
  *
  * @author Joas Schilling <coding@schilljs.com>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -27,11 +28,15 @@ declare(strict_types=1);
 namespace OCA\Talk\Controller;
 
 use OCA\Talk\Model\Command;
+use OCA\Talk\ResponseDefinitions;
 use OCA\Talk\Service\CommandService;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 
+/**
+ * @psalm-import-type SpreedCommand from ResponseDefinitions
+ */
 class CommandController extends OCSController {
 	protected CommandService $commandService;
 
@@ -42,6 +47,11 @@ class CommandController extends OCSController {
 		$this->commandService = $commandService;
 	}
 
+	/**
+	 * Get a list of commands
+	 *
+	 * @return DataResponse<SpreedCommand[], Http::STATUS_OK>
+	 */
 	public function index(): DataResponse {
 		$commands = $this->commandService->findAll();
 

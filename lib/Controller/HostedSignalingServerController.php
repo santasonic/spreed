@@ -5,6 +5,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2020 Morris Jobke <hey@morrisjobke.de>
  *
  * @author Morris Jobke <hey@morrisjobke.de>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -63,6 +64,13 @@ class HostedSignalingServerController extends OCSController {
 
 	/**
 	 * @PublicPage
+	 *
+	 * Get the authentication credentials
+	 *
+	 * @return DataResponse<array{nonce: string}, Http::STATUS_OK>|DataResponse<array, Http::STATUS_PRECONDITION_FAILED>
+	 *
+	 * 200: Authentication credentials returned
+	 * 412: Getting authentication credentials is not possible
 	 */
 	public function auth(): DataResponse {
 		$storedNonce = $this->config->getAppValue('spreed', 'hosted-signaling-server-nonce', '');
@@ -78,6 +86,19 @@ class HostedSignalingServerController extends OCSController {
 		return new DataResponse([], Http::STATUS_PRECONDITION_FAILED);
 	}
 
+	/**
+	 * Request a trial account
+	 *
+	 * @param string $url Server URL
+	 * @param string $name Display name of the user
+	 * @param string $email Email of the user
+	 * @param string $language Language of the user
+	 * @param string $country Country of the user
+	 * @return DataResponse<array{created: int, expires: int, limits: ?array{users: int}, owner: array{url: string, name: string, email: string, language: string, country: string}, status: string, signaling: array{url: string, secret: string}}, Http::STATUS_OK>|DataResponse<array{message: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Trial requested successfully
+	 * 400: Requesting trial is not possible
+	 */
 	public function requestTrial(string $url, string $name, string $email, string $language, string $country): DataResponse {
 		try {
 			$registerAccountData = new RegisterAccountData(
@@ -101,6 +122,14 @@ class HostedSignalingServerController extends OCSController {
 		return new DataResponse($accountInfo);
 	}
 
+	/**
+	 * Delete the account
+	 *
+	 * @return DataResponse<array, Http::STATUS_NO_CONTENT>|DataResponse<array{message: string}, Http::STATUS_BAD_REQUEST|Http::STATUS_INTERNAL_SERVER_ERROR>
+	 *
+	 * 204: Account deleted successfully
+	 * 400: Deleting account is not possible
+	 */
 	public function deleteAccount(): DataResponse {
 		$accountId = $this->config->getAppValue('spreed', 'hosted-signaling-server-account-id');
 

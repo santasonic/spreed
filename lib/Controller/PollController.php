@@ -6,6 +6,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2022 Joas Schilling <coding@schilljs.com>
  *
  * @author Joas Schilling <coding@schilljs.com>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -26,10 +27,12 @@ declare(strict_types=1);
 
 namespace OCA\Talk\Controller;
 
+use JsonException;
 use OCA\Talk\Chat\ChatManager;
 use OCA\Talk\Exceptions\WrongPermissionsException;
 use OCA\Talk\Model\Poll;
 use OCA\Talk\Model\Vote;
+use OCA\Talk\ResponseDefinitions;
 use OCA\Talk\Room;
 use OCA\Talk\Service\AttachmentService;
 use OCA\Talk\Service\PollService;
@@ -41,6 +44,9 @@ use OCP\DB\Exception;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
+/**
+ * @psalm-import-type SpreedPoll from ResponseDefinitions
+ */
 class PollController extends AEnvironmentAwareController {
 	protected ChatManager $chatManager;
 	protected PollService $pollService;
@@ -70,11 +76,16 @@ class PollController extends AEnvironmentAwareController {
 	 * @RequirePermissions(permissions=chat)
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * @param string $question
-	 * @param array $options
-	 * @param int $resultMode
-	 * @param int $maxVotes
-	 * @return DataResponse
+	 * Create a poll
+	 *
+	 * @param string $question Question of the poll
+	 * @param string[] $options Options of the poll
+	 * @param int $resultMode Mode how the results will be shown
+	 * @param int $maxVotes Number of maximum votes per voter
+	 * @return DataResponse<SpreedPoll, Http::STATUS_CREATED>|DataResponse<array, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 201: Poll created successfully
+	 * 400: Creating poll is not possible
 	 */
 	public function createPoll(string $question, array $options, int $resultMode, int $maxVotes): DataResponse {
 		if ($this->room->getType() !== Room::TYPE_GROUP
@@ -126,8 +137,13 @@ class PollController extends AEnvironmentAwareController {
 	 * @RequireParticipant
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * @param int $pollId
-	 * @return DataResponse
+	 * Get a poll
+	 *
+	 * @param int $pollId ID of the poll
+	 * @return DataResponse<SpreedPoll, Http::STATUS_OK>|DataResponse<array, Http::STATUS_NOT_FOUND>
+	 *
+	 * 200: Poll returned
+	 * 404: Poll not found
 	 */
 	public function showPoll(int $pollId): DataResponse {
 		try {
@@ -150,9 +166,15 @@ class PollController extends AEnvironmentAwareController {
 	 * @RequireParticipant
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * @param int $pollId
-	 * @param int[] $optionIds
-	 * @return DataResponse
+	 * Vote on a poll
+	 *
+	 * @param int $pollId ID of the poll
+	 * @param int[] $optionIds IDs of the selected options
+	 * @return DataResponse<SpreedPoll, Http::STATUS_OK>|DataResponse<array, Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND>
+	 *
+	 * 200: Voted successfully
+	 * 400: Voting is not possible
+	 * 404: Poll not found
 	 */
 	public function votePoll(int $pollId, array $optionIds = []): DataResponse {
 		try {
@@ -198,8 +220,15 @@ class PollController extends AEnvironmentAwareController {
 	 * @RequireParticipant
 	 * @RequireModeratorOrNoLobby
 	 *
-	 * @param int $pollId
-	 * @return DataResponse
+	 * Close a poll
+	 *
+	 * @param int $pollId ID of the poll
+	 * @return DataResponse<SpreedPoll, Http::STATUS_OK>|DataResponse<array, Http::STATUS_BAD_REQUEST|Http::STATUS_FORBIDDEN|Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR>
+	 *
+	 * 200: Poll closed successfully
+	 * 400: Poll already closed
+	 * 403: Missing permissions to close poll
+	 * 404: Poll not found
 	 */
 	public function closePoll(int $pollId): DataResponse {
 		try {
@@ -250,6 +279,10 @@ class PollController extends AEnvironmentAwareController {
 		return new DataResponse($this->renderPoll($poll, $votedSelf, $detailedVotes));
 	}
 
+	/**
+	 * @return SpreedPoll
+	 * @throws JsonException
+	 */
 	protected function renderPoll(Poll $poll, array $votedSelf = [], array $detailedVotes = []): array {
 		$data = $poll->asArray();
 		unset($data['roomId']);

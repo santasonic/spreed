@@ -5,6 +5,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2022 Joas Schilling <coding@schilljs.com>
  *
  * @author Joas Schilling <coding@schilljs.com>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -27,6 +28,7 @@ namespace OCA\Talk\Controller;
 
 use InvalidArgumentException;
 use OCA\Talk\Exceptions\ParticipantNotFoundException;
+use OCA\Talk\ResponseDefinitions;
 use OCA\Talk\Service\BreakoutRoomService;
 use OCA\Talk\Service\ParticipantService;
 use OCA\Talk\Service\RoomFormatter;
@@ -35,6 +37,9 @@ use OCP\AppFramework\Http\DataResponse;
 use OCP\Comments\MessageTooLongException;
 use OCP\IRequest;
 
+/**
+ * @psalm-import-type SpreedRoom from ResponseDefinitions
+ */
 class BreakoutRoomController extends AEnvironmentAwareController {
 	public function __construct(
 		string $appName,
@@ -51,10 +56,15 @@ class BreakoutRoomController extends AEnvironmentAwareController {
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
 	 *
-	 * @param int $mode
-	 * @param int $amount
-	 * @param string $attendeeMap
-	 * @return DataResponse
+	 * Configure the breakout rooms
+	 *
+	 * @param int $mode Mode of the breakout rooms
+	 * @param int $amount Number of breakout rooms
+	 * @param string $attendeeMap Mapping of the attendees to breakout rooms
+	 * @return DataResponse<SpreedRoom[], Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Breakout rooms configured successfully
+	 * 400: Configuring breakout rooms is not possible
 	 */
 	public function configureBreakoutRooms(int $mode, int $amount, string $attendeeMap = '[]'): DataResponse {
 		try {
@@ -70,6 +80,10 @@ class BreakoutRoomController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
+	 *
+	 * Remove the breakout rooms
+	 *
+	 * @return DataResponse<SpreedRoom, Http::STATUS_OK>
 	 */
 	public function removeBreakoutRooms(): DataResponse {
 		$this->breakoutRoomService->removeBreakoutRooms($this->room);
@@ -85,6 +99,15 @@ class BreakoutRoomController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
+	 *
+	 * Broadcast a chat message to all breakout rooms
+	 *
+	 * @param string $message Message to broadcast
+	 * @return DataResponse<SpreedRoom[], Http::STATUS_CREATED>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>|DataResponse<array{error: string}, Http::STATUS_REQUEST_ENTITY_TOO_LARGE>
+	 *
+	 * 201: Chat message broadcasted successfully
+	 * 400: Broadcasting chat message is not possible
+	 * 413: Chat message too long
 	 */
 	public function broadcastChatMessage(string $message): DataResponse {
 		try {
@@ -101,6 +124,14 @@ class BreakoutRoomController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
+	 *
+	 * Apply an attendee map to the breakout rooms
+	 *
+	 * @param string $attendeeMap Mapping of the attendees to breakout rooms
+	 * @return DataResponse<SpreedRoom[], Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Attendee map applied successfully
+	 * 400: Applying attendee map is not possible
 	 */
 	public function applyAttendeeMap(string $attendeeMap): DataResponse {
 		try {
@@ -115,6 +146,13 @@ class BreakoutRoomController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireLoggedInParticipant
+	 *
+	 * Request assistance
+	 *
+	 * @return DataResponse<SpreedRoom, Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Assistance requested successfully
+	 * 400: Requesting assistance is not possible
 	 */
 	public function requestAssistance(): DataResponse {
 		try {
@@ -134,6 +172,13 @@ class BreakoutRoomController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireLoggedInParticipant
+	 *
+	 * Reset the request for assistance
+	 *
+	 * @return DataResponse<SpreedRoom, Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Request for assistance reset successfully
+	 * 400: Resetting the request for assistance is not possible
 	 */
 	public function resetRequestForAssistance(): DataResponse {
 		try {
@@ -153,6 +198,13 @@ class BreakoutRoomController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
+	 *
+	 * Start the breakout rooms
+	 *
+	 * @return DataResponse<SpreedRoom[], Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Breakout rooms started successfully
+	 * 400: Starting breakout rooms is not possible
 	 */
 	public function startBreakoutRooms(): DataResponse {
 		try {
@@ -168,6 +220,13 @@ class BreakoutRoomController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
+	 *
+	 * Stop the breakout rooms
+	 *
+	 * @return DataResponse<SpreedRoom[], Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Breakout rooms stopped successfully
+	 * 400: Stopping breakout rooms is not possible
 	 */
 	public function stopBreakoutRooms(): DataResponse {
 		try {
@@ -183,6 +242,14 @@ class BreakoutRoomController extends AEnvironmentAwareController {
 	/**
 	 * @NoAdminRequired
 	 * @RequireLoggedInParticipant
+	 *
+	 * Switch to another breakout room
+	 *
+	 * @param string $target Target breakout room
+	 * @return DataResponse<SpreedRoom[], Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Switched to another breakout room successfully
+	 * 400: Switching to another breakout room is not possible
 	 */
 	public function switchBreakoutRoom(string $target): DataResponse {
 		try {
@@ -199,6 +266,9 @@ class BreakoutRoomController extends AEnvironmentAwareController {
 		));
 	}
 
+	/**
+	 * @return SpreedRoom[]
+	 */
 	protected function formatMultipleRooms(array $rooms): array {
 		$return = [];
 		foreach ($rooms as $room) {

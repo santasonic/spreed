@@ -5,6 +5,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2021, Gary Kim <gary@garykim.dev>
  *
  * @author Gary Kim <gary@garykim.dev>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -31,6 +32,7 @@ use OCA\Talk\Exceptions\UnauthorizedException;
 use OCA\Talk\Federation\FederationManager;
 use OCA\Talk\Manager;
 use OCA\Talk\Model\Invitation;
+use OCA\Talk\ResponseDefinitions;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
@@ -39,6 +41,9 @@ use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
 
+/**
+ * @psalm-import-type SpreedRoomShare from ResponseDefinitions
+ */
 class FederationController extends OCSController {
 	private FederationManager $federationManager;
 
@@ -59,11 +64,15 @@ class FederationController extends OCSController {
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @param int $id
-	 * @return DataResponse
+	 * Accept a federated share
+	 *
+	 * @param int $id ID of the share
+	 * @return DataResponse<array, Http::STATUS_OK>
 	 * @throws UnauthorizedException
 	 * @throws DBException
 	 * @throws MultipleObjectsReturnedException
+	 *
+	 * 200: Share accepted successfully
 	 */
 	public function acceptShare(int $id): DataResponse {
 		$user = $this->userSession->getUser();
@@ -77,11 +86,15 @@ class FederationController extends OCSController {
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @param int $id
-	 * @return DataResponse
+	 * Reject a federated share
+	 *
+	 * @param int $id ID of the share
+	 * @return DataResponse<array, Http::STATUS_OK>
 	 * @throws UnauthorizedException
 	 * @throws DBException
 	 * @throws MultipleObjectsReturnedException
+	 *
+	 * 200: Share rejected successfully
 	 */
 	public function rejectShare(int $id): DataResponse {
 		$user = $this->userSession->getUser();
@@ -95,7 +108,9 @@ class FederationController extends OCSController {
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @return DataResponse
+	 * Get a list of federated shares
+	 *
+	 * @return DataResponse<SpreedRoomShare[], Http::STATUS_OK>
 	 */
 	public function getShares(): DataResponse {
 		$user = $this->userSession->getUser();

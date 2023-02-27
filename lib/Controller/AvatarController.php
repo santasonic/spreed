@@ -6,6 +6,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2022, Vitor Mattos <vitor@php.rio>
  *
  * @author Vitor Mattos <vitor@php.rio>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -54,6 +55,13 @@ class AvatarController extends AEnvironmentAwareController {
 	/**
 	 * @PublicPage
 	 * @RequireModeratorParticipant
+	 *
+	 * Upload an avatar for a room
+	 *
+	 * @return DataResponse<array{avatar: string}, Http::STATUS_OK>|DataResponse<array{message: string}, Http::STATUS_BAD_REQUEST>
+	 *
+	 * 200: Avatar uploaded successfully
+	 * 400: Avatar invalid
 	 */
 	public function uploadAvatar(): DataResponse {
 		try {
@@ -80,6 +88,11 @@ class AvatarController extends AEnvironmentAwareController {
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @RequireParticipant
+	 *
+	 * Get the avatar of a room
+	 *
+	 * @param bool $darkTheme Theme used for background
+	 * @return FileDisplayResponse<Http::STATUS_OK>
 	 */
 	public function getAvatar(bool $darkTheme = false): Response {
 		$file = $this->avatarService->getAvatar($this->getRoom(), $this->userSession->getUser(), $darkTheme);
@@ -95,14 +108,22 @@ class AvatarController extends AEnvironmentAwareController {
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 * @RequireParticipant
+	 *
+	 * Get the dark mode avatar of a room
+	 *
+	 * @return FileDisplayResponse<Http::STATUS_OK>
 	 */
-	public function getAvatarDark(): Response {
+	public function getAvatarDark(): FileDisplayResponse {
 		return $this->getAvatar(true);
 	}
 
 	/**
 	 * @PublicPage
 	 * @RequireModeratorParticipant
+	 *
+	 * Delete the avatar of a room
+	 *
+	 * @return DataResponse<array, Http::STATUS_OK>
 	 */
 	public function deleteAvatar(): DataResponse {
 		$this->avatarService->deleteAvatar($this->getRoom());

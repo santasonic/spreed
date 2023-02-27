@@ -5,6 +5,7 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2020 Julien Veyssier <eneiluj@posteo.net>
  *
  * @author Julien Veyssier <eneiluj@posteo.net>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -28,10 +29,15 @@ namespace OCA\Talk\Controller;
 use OCA\Talk\Exceptions\ImpossibleToKillException;
 use OCA\Talk\Manager;
 use OCA\Talk\MatterbridgeManager;
+use OCA\Talk\ResponseDefinitions;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\IRequest;
 
+/**
+ * @psalm-import-type SpreedMatterbridge from ResponseDefinitions
+ * @psalm-import-type SpreedMatterbridgeProcessState from ResponseDefinitions
+ */
 class MatterbridgeController extends AEnvironmentAwareController {
 	protected ?string $userId;
 	protected Manager $manager;
@@ -49,12 +55,12 @@ class MatterbridgeController extends AEnvironmentAwareController {
 	}
 
 	/**
-	 * Get bridge information of one room
-	 *
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
 	 *
-	 * @return DataResponse
+	 * Get bridge information of a room
+	 *
+	 * @return DataResponse<SpreedMatterbridge&SpreedMatterbridgeProcessState, Http::STATUS_OK>
 	 */
 	public function getBridgeOfRoom(): DataResponse {
 		$pid = $this->bridgeManager->checkBridge($this->room);
@@ -66,12 +72,12 @@ class MatterbridgeController extends AEnvironmentAwareController {
 	}
 
 	/**
-	 * Get bridge process information
-	 *
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
 	 *
-	 * @return DataResponse
+	 * Get bridge process information
+	 *
+	 * @return DataResponse<SpreedMatterbridgeProcessState, Http::STATUS_OK>
 	 */
 	public function getBridgeProcessState(): DataResponse {
 		$state = $this->bridgeManager->getBridgeProcessState($this->room);
@@ -79,14 +85,17 @@ class MatterbridgeController extends AEnvironmentAwareController {
 	}
 
 	/**
-	 * Edit bridge information of one room
-	 *
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
 	 *
-	 * @param bool $enabled
-	 * @param array $parts
-	 * @return DataResponse
+	 * Edit bridge information of a room
+	 *
+	 * @param bool $enabled If the bridge should be enabled
+	 * @param array $parts New parts
+	 * @return DataResponse<SpreedMatterbridgeProcessState, Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_NOT_ACCEPTABLE>
+	 *
+	 * 200: Bridge edited successfully
+	 * 406: Editing bridge is not possible
 	 */
 	public function editBridgeOfRoom(bool $enabled, array $parts = []): DataResponse {
 		try {
@@ -98,12 +107,15 @@ class MatterbridgeController extends AEnvironmentAwareController {
 	}
 
 	/**
-	 * Delete bridge of one room
-	 *
 	 * @NoAdminRequired
 	 * @RequireLoggedInModeratorParticipant
 	 *
-	 * @return DataResponse
+	 * Delete bridge of a room
+	 *
+	 * @return DataResponse<bool, Http::STATUS_OK>|DataResponse<array{error: string}, Http::STATUS_NOT_ACCEPTABLE>
+	 *
+	 * 200: Bridge deleted successfully
+	 * 406: Deleting bridge is not possible
 	 */
 	public function deleteBridgeOfRoom(): DataResponse {
 		try {
