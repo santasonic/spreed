@@ -1,0 +1,2 @@
+attrs python3-attrs (>= 19.2.0)
+async_generator python3-async-generator (>= 1.9)
