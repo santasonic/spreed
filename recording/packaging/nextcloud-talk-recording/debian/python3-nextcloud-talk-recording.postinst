@@ -1,0 +1,3 @@
+# The user running nextcloud-talk-recording needs a home directory for
+# geckodriver and PulseAudio related files.
+useradd --system --create-home nextcloud-talk-recording || true
