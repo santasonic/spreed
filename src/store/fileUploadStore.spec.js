@@ -161,7 +161,7 @@ describe('fileUploadStore', () => {
 			client.putFileContents.mockResolvedValue()
 			shareFile.mockResolvedValue()
 
-			await store.dispatch('uploadFiles', 'upload-id1')
+			await store.dispatch('uploadFiles', { uploadId: 'upload-id1' })
 
 			expect(client.putFileContents).toHaveBeenCalledTimes(2)
 			expect(shareFile).toHaveBeenCalledTimes(2)
@@ -204,7 +204,7 @@ describe('fileUploadStore', () => {
 				},
 			})
 
-			await store.dispatch('uploadFiles', 'upload-id1')
+			await store.dispatch('uploadFiles', { uploadId: 'upload-id1' })
 
 			expect(client.putFileContents).toHaveBeenCalledTimes(1)
 			expect(shareFile).not.toHaveBeenCalled()
@@ -242,7 +242,7 @@ describe('fileUploadStore', () => {
 				},
 			})
 
-			await store.dispatch('uploadFiles', 'upload-id1')
+			await store.dispatch('uploadFiles', { uploadId: 'upload-id1' })
 
 			expect(client.putFileContents).toHaveBeenCalledTimes(1)
 			expect(shareFile).toHaveBeenCalledTimes(1)

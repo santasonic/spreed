@@ -136,7 +136,7 @@
 					@audio-file="handleAudioFile" />
 				<!-- Send buttons -->
 				<template v-else>
-					<NcActions v-if="!broadcast"
+					<NcActions v-if="!broadcast || !upload"
 						:force-menu="true">
 						<!-- Silent send -->
 						<NcActionButton :close-after-click="true"
@@ -323,6 +323,14 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
+		/**
+		 * Upload files caption.
+		 */
+		upload: {
+			type: Boolean,
+			default: false,
+		},
 	},
 
 	data() {
@@ -469,11 +477,11 @@ export default {
 		},
 
 		showAttachmentsMenu() {
-			return (this.canUploadFiles || this.canShareFiles) && !this.broadcast
+			return (this.canUploadFiles || this.canShareFiles) && !this.broadcast && !this.upload
 		},
 
 		showAudioRecorder() {
-			return !this.hasText && this.canUploadFiles && !this.broadcast
+			return !this.hasText && this.canUploadFiles && !this.broadcast && !this.upload
 		},
 	},
 
@@ -524,6 +532,9 @@ export default {
 
 	methods: {
 		handleUploadStart() {
+			if (this.upload) {
+				return
+			}
 			// refocus on upload start as the user might want to type again
 			// while the upload is running
 			this.focusInput()
@@ -543,6 +554,11 @@ export default {
 					await this.handleSubmitSpam(match[1])
 					return
 				}
+			}
+
+			if (this.upload) {
+				this.$emit('sent', this.text)
+				return
 			}
 
 			if (this.text !== '') {

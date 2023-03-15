@@ -21,6 +21,7 @@
 
 <template>
 	<NcModal v-if="showModal"
+		ref="modal"
 		:size="isVoiceMessage ? 'small' : 'normal'"
 		class="upload-editor"
 		:container="container"
@@ -60,14 +61,16 @@
 				<AudioPlayer :name="voiceMessageName"
 					:local-url="voiceMessageLocalURL" />
 			</template>
-			<div class="upload-editor__actions">
-				<NcButton type="tertiary" @click="handleDismiss">
-					{{ t('spreed', 'Dismiss') }}
-				</NcButton>
-				<NcButton ref="submitButton" type="primary" @click="handleUpload">
-					{{ t('spreed', 'Send') }}
-				</NcButton>
-			</div>
+			<NewMessageForm v-if="modalContainerId"
+				class="upload-editor__message-form"
+				role="region"
+				:token="token"
+				:breakout-room="true"
+				:container-id="modalContainerId"
+				:aria-label="t('spreed', 'Post message')"
+				:upload="true"
+				@sent="handleUpload"
+				@failure="handleDismiss" />
 		</div>
 	</NcModal>
 </template>
@@ -81,16 +84,25 @@ import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
 
 import AudioPlayer from './MessagesList/MessagesGroup/Message/MessagePart/AudioPlayer.vue'
 import FilePreview from './MessagesList/MessagesGroup/Message/MessagePart/FilePreview.vue'
+import NewMessageForm from './NewMessageForm/NewMessageForm.vue'
 
 export default {
 	name: 'UploadEditor',
 
 	components: {
-		NcModal,
-		FilePreview,
-		Plus,
 		AudioPlayer,
+		FilePreview,
 		NcButton,
+		NcModal,
+		NewMessageForm,
+		Plus,
+	},
+
+	data() {
+		return {
+			mediaCaption: '',
+			modalContainerId: null,
+		}
 	},
 
 	computed: {
@@ -125,8 +137,7 @@ export default {
 			return this.files[Object.keys(this.files)[0]]
 		},
 
-		// Hide the plus button in case this editor is used while sending a voice
-		// message
+		// Hide the plus button in case this editor is used while sending a voice message
 		isVoiceMessage() {
 			if (!this.firstFile) {
 				return false
@@ -152,15 +163,16 @@ export default {
 	watch: {
 		showModal(show) {
 			if (show) {
-				this.focus()
+				this.getContainerId()
 			}
 		},
 	},
 
 	methods: {
-		focus() {
+		getContainerId() {
 			this.$nextTick(() => {
-				this.$refs.submitButton.$el.focus()
+				// Postpone render of NewMessageForm until modal container is mounted
+				this.modalContainerId = `#modal-description-${this.$refs.modal.randId}`
 			})
 		},
 
@@ -168,8 +180,8 @@ export default {
 			this.$store.dispatch('discardUpload', this.currentUploadId)
 		},
 
-		handleUpload() {
-			this.$store.dispatch('uploadFiles', this.currentUploadId)
+		handleUpload(mediaCaption) {
+			this.$store.dispatch('uploadFiles', { uploadId: this.currentUploadId, mediaCaption })
 		},
 		/**
 		 * Clicks the hidden file input when clicking the correspondent NcActionButton,
@@ -202,20 +214,15 @@ export default {
 	padding: 16px;
 
 	&__previews {
-		overflow-x: hidden !important;
 		display: flex;
 		position: relative;
 		overflow: auto;
 		flex-wrap: wrap;
 	}
-	&__actions {
-		display: flex;
-		justify-content: space-between;
+	&__message-form {
 		margin-top: 16px;
 		margin-bottom: 4px;
-		button {
-			margin: 0 4px 0 4px;
-		}
+		width: 100%;
 	}
 }
 
@@ -227,6 +234,11 @@ export default {
 	&__button {
 		margin: auto;
 	}
+}
+
+:deep(.modal-container) {
+	// Fix visibility for popovers, like EmojiPicker
+	overflow: visible !important;
 }
 
 </style>
