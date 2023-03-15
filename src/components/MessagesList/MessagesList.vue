@@ -197,6 +197,12 @@ export default {
 					continue
 				}
 
+				// FIXME delete when could be received from backend
+				if (message.message === '{file}' && message.messageType === 'comment' && !message.mediaCaption) {
+					message.mediaCaption = 'You can also add mentions: {mention-user1} and emojis 😍'
+					message.messageParameters['mention-user1'] = { type: 'user', id: 'bob', name: 'bob' }
+				}
+
 				if (!this.messagesShouldBeGrouped(message, lastMessage)) {
 					// Add the date separator for different days
 					if (this.messagesHaveDifferentDate(message, lastMessage)) {

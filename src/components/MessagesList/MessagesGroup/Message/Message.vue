@@ -78,7 +78,7 @@ the main body of the message as well as a quote.
 				</div>
 				<div v-else class="message-body__main__text" :class="{'system-message': isSystemMessage}">
 					<Quote v-if="parent" :parent-id="parent" v-bind="quote" />
-					<NcRichText :text="message"
+					<NcRichText :text="renderedMessage"
 						:arguments="richParameters"
 						:autolink="true"
 						:reference-limit="1" />
@@ -369,6 +369,13 @@ export default {
 			required: true,
 		},
 		/**
+		 * The caption passed with media file.
+		 */
+		mediaCaption: {
+			type: String,
+			default: null,
+		},
+		/**
 		 * The parent message's id.
 		 */
 		parent: {
@@ -427,6 +434,14 @@ export default {
 
 		isLastReadMessage() {
 			return !this.isLastMessage && this.id === this.$store.getters.getVisualLastReadMessageId(this.token)
+		},
+
+		renderedMessage() {
+			if (!this.mediaCaption) {
+				return this.message
+			}
+			// TODO decide if we want to see caption above media or below it
+			return [this.message, this.mediaCaption].join(' ')
 		},
 
 		messageObject() {
