@@ -311,9 +311,8 @@ export default {
 		 * When this component is used to send message to a breakout room we
 		 * pass an id of modal containing component to render properly.
 		 */
-		containerId: {
+		container: {
 			type: String,
-			default: null,
 		},
 
 		/**
@@ -409,13 +408,7 @@ export default {
 			return this.text !== ''
 		},
 
-		container() {
-			return this.containerId ?? this.$store.getters.getMainContainerSelector()
-		},
-
 		containerElement() {
-			// TODO can't find DOM element by #content-vue. undefined is passed
-			//  for NcRichContenteditable to use 'document.body' by default
 			return document.querySelector(this.container) ?? undefined
 		},
 
